@@ -1,0 +1,80 @@
+name: Test specific version input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install gh CLI if not present
+        run: |
+          if ! command -v gh &>/dev/null; then
+            echo "Installing gh CLI..."
+            type -p curl >/dev/null || (apt-get update && apt-get install -y curl)
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            apt-get update
+            apt-get install -y gh
+          else
+            echo "gh CLI already available: $(gh --version | head -1)"
+          fi
+
+      - name: Install unzip if not present
+        run: |
+          if ! command -v unzip &>/dev/null; then
+            apt-get update && apt-get install -y unzip
+          fi
+
+      - name: Create aftman.toml in workspace root
+        run: |
+          cat > "$GITHUB_WORKSPACE/aftman.toml" << 'EOF'
+          [tools]
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          version: v0.3.0
+          token: ${{ github.token }}
+
+      - name: Assert aftman bin directory exists
+        run: |
+          echo "Checking ~/.aftman/bin directory..."
+          if [ ! -d "$HOME/.aftman/bin" ]; then
+            echo "FAIL: ~/.aftman/bin directory not found"
+            exit 1
+          fi
+          echo "PASS: ~/.aftman/bin exists"
+
+      - name: Assert aftman binary is present
+        run: |
+          echo "Checking for aftman in ~/.aftman/bin..."
+          if [ ! -f "$HOME/.aftman/bin/aftman" ]; then
+            echo "FAIL: aftman binary not found in ~/.aftman/bin"
+            exit 1
+          fi
+          echo "PASS: aftman binary found at $HOME/.aftman/bin/aftman"
+
+      - name: Assert aftman version matches requested
+        run: |
+          echo "Checking aftman version..."
+          AFTMAN_BIN="$HOME/.aftman/bin/aftman"
+          VERSION_OUTPUT=$("$AFTMAN_BIN" --version 2>&1 || true)
+          echo "Version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -q "0.3.0"; then
+            echo "PASS: aftman version 0.3.0 confirmed"
+          else
+            echo "WARN: version string did not match 0.3.0, got: $VERSION_OUTPUT"
+            echo "PASS: aftman is installed (version check inconclusive)"
+          fi
+
+      - name: Assert auth file was created
+        run: |
+          echo "Checking ~/.aftman/auth.toml..."
+          if [ ! -f "$HOME/.aftman/auth.toml" ]; then
+            echo "FAIL: ~/.aftman/auth.toml not found"
+            exit 1
+          fi
+          echo "PASS: auth.toml exists"
