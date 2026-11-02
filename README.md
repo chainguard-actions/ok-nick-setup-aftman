@@ -6,9 +6,9 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v0.4.2 | [`v0.4.2`](https://github.com/chainguard-actions/ok-nick-setup-aftman/tree/v0.4.2) | [`e226f24`](https://github.com/ok-nick/setup-aftman/commit/e226f24209f47677da7b215bab44f6351a2c043b) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v0.4.2 | [`v0.4.2`](https://github.com/chainguard-actions/ok-nick-setup-aftman/tree/v0.4.2) | [`e226f24`](https://github.com/ok-nick/setup-aftman/commit/e226f24209f47677da7b215bab44f6351a2c043b) | [`HARDENING.md`](https://github.com/chainguard-actions/ok-nick-setup-aftman/blob/v0.4.2/HARDENING.md) |
 
 ## Privacy
 
