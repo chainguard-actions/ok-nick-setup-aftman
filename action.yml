@@ -1,6 +1,7 @@
 name: setup-aftman
 description: Github action to install and run aftman; a toolchain manager.
 author: ok-nick
+
 inputs:
   version:
     description: "`aftman` git tag (usually in the form vx.x.x)"
@@ -17,6 +18,7 @@ inputs:
     description: "GitHub token via `github.token`"
     default: "${{ github.token }}"
     required: false
+
 runs:
   using: "composite"
   steps:
@@ -49,13 +51,14 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
         INPUT_VERSION: ${{ inputs.version }}
-        RUNNER_OS: ${{ runner.os }}
       shell: bash
+
     - name: Install aftman
       run: |
         unzip aftman*.zip
         ./aftman self-install
       shell: bash
+
     - name: Delete artifacts
       run: |
         rm aftman*.zip
@@ -64,25 +67,29 @@ runs:
         else
           rm aftman
         fi
-      env:
-        RUNNER_OS: ${{ runner.os }}
       shell: bash
+
     - name: Set environment variable
       if: runner.os == 'Windows'
-      run: echo "$HOME/.aftman/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      run: |
+        $safe = "$HOME/.aftman/bin" -replace "[`r`n]", ""
+        echo $safe | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       shell: powershell
+
     - name: Set environment variable
       if: runner.os != 'Windows'
-      run: echo "$HOME/.aftman/bin" >> $GITHUB_PATH
+      run: |
+        safe=$(printf '%s' "$HOME/.aftman/bin" | tr -d '\n\r')
+        echo "$safe" >> "$GITHUB_PATH"
       shell: bash
+
     - name: Create auth file
       run: |
-        cat > $HOME/.aftman/auth.toml << EOF
-        github = "$INPUT_TOKEN"
-        EOF
+        printf 'github = "%s"\n' "$INPUT_TOKEN" > "$HOME/.aftman/auth.toml"
       env:
         INPUT_TOKEN: ${{ inputs.token }}
       shell: bash
+
     - name: Cache binaries
       if: ${{ inputs.cache == 'true' }}
       uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
@@ -91,6 +98,7 @@ runs:
           ~/.aftman/bin
           ~/.aftman/tool-storage
         key: ${{ runner.os }}-aftman-${{hashFiles(format('{0}/{1}', inputs.path, 'aftman.toml'))}}
+
     - name: Install tools
       run: |
         cd "$INPUT_PATH"
@@ -98,6 +106,7 @@ runs:
       env:
         INPUT_PATH: ${{ inputs.path }}
       shell: bash
+
 branding:
   icon: link-2
   color: blue
